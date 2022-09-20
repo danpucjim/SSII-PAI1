@@ -61,15 +61,10 @@ def comp_hash(alg,directorio):
     contador = 0
     all_directories(alg,directorio,new_hash)
     for keys,values in hashes.items():
-        for keys1,values1 in new_hash.items():
-            print(values1)
-            if values1 == values:
-                contador
-                break
-            else:
-                contador+=1
-                print(values1,values)
-                break
+        if hashes[keys] == new_hash[keys]:
+            pass
+        else:
+            contador+=1
     print(contador)
     return contador
 
@@ -88,8 +83,7 @@ def main():
     if(len(args)>1):
         #si ejecutamos el script.py sha256
         if(args[1] == 'sha256'):
-            all_directories('sha256','.',hashes)
-            comp_hash('sha256','.')
+            print("Hay cambio en",comp_hash('sha256','.'),"archivos posible infeccion")
             return args
         # si ejecutamos el script.py sha1
         elif(args[1] == 'sha1'):
