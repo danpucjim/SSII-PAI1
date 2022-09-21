@@ -54,13 +54,17 @@ def lect_archivo(archivo, bs, h):
 # recibe alg(sha256 o sha1) - directorio(sobre el que se haran los hashes de los archivos) - dict(el diccionario de los hashes antiguos o el nuevo)
 def hash_todo_directorio(alg,directorio,dict):
     
-    archivos = os.listdir(directorio) # Nombre de todos los archivos en el directorio dado
+    nombres = os.listdir(directorio) # Nombre de todos los archivos en el directorio dado
+    archivos = [os.path.join(directorio, nombre) for nombre in nombres] # Ruta completa de cada archivo en el directorio
     
     for x in archivos: # HORRIBLE. LO ARREGLARE
-        if(x==".git"):
-            pass
-        else:
+       match alg:
+        case 'sha1':
+            dict[x] = alg_sha1(x)
+        case 'sha256':
             dict[x] = alg_sha256(x)
+
+    guardar_hash("hash", dict)
 
 
 # Guardar los hashes calculados junto con el nombre de los archivos en el fichero
@@ -80,10 +84,11 @@ def comp_hash(alg,directorio):
     hash_todo_directorio(alg,directorio,new_hash)
 
     for archivo,hash in hashes.items():
-        if hash == new_hash[archivo]:
-            pass
-        else:
-            contador+=1
+        if archivo in new_hash:
+            if hash == new_hash[archivo]:
+                pass
+            else:
+                contador+=1
     # print(contador)
 
     return contador
@@ -93,10 +98,13 @@ def comp_hash(alg,directorio):
 def actualizar_dict_hash():
 
     file = open("hash","r")
-    print(file)
     for linea in file:
-        datos = linea.split(":")
-        hashes[datos[0]] = datos[1].split('\n')[0]
+
+        ruta,resto = os.path.split(linea) # Te devuelve la ruta y el resto
+        fichero = resto.split(':')[0]
+        hash = resto.split(':')[1]
+
+        hashes[ruta+"\\"+fichero] = hash.split('\n')[0]
 
 
 
@@ -105,19 +113,19 @@ def main():
     print('Ejecutando el script')
 
     args = sys.argv # guardamos los argumentos que pasamos en el script y comprobamos que algoritmo utilizara
-    
     actualizar_dict_hash()
     
     if(len(args)>1):
 
-        match args:
+        tipo_alg = args[1] # args es ['.\\script_manu.py', 'sha1']
+
+        match tipo_alg:
             case 'sha256': # Si ejecutamos: script.py sha256
-                print("Hay cambio en ", comp_hash('sha256',r'C:\Users\Manuel\Documents\SSII-code\SSII-PAI1\archivos'), " archivos.")
-                return args
+                print("Hay cambios en ", comp_hash('sha256', r'C:\Users\Manuel\Documents\SSII-code\SSII-PAI1\archivos'), " archivos.")
             
+
             case 'sha1': # Si ejecutamos: script.py sha1
-                hash_todo_directorio('sha1','.',hashes)
-                return args
+                print("Hay cambios en ", comp_hash('sha1',r'C:\Users\Manuel\Documents\SSII-code\SSII-PAI1\archivos'), " archivos.")
     
     print('Script finalizado')
 
