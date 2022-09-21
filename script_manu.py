@@ -1,6 +1,7 @@
 import hashlib
 import sys
 import os
+import logging
 
 # CONSTANTES GLOBALES
 BLOCK_SIZE = 65536 # tamanyo de cada bloque del archivo
@@ -15,6 +16,8 @@ hashes = dict() # Diccionario con el hash calculado la primera vez
 new_hash = dict() # Diccionario con el hash calculado ahora mismo para compararlo con el antiguo
 CONTADOR = 0
 
+
+logging.basicConfig(filename='log.log', encoding='utf-8', level=logging.DEBUG)
 
 """
 FUNCIONES
@@ -89,6 +92,7 @@ def comp_hash(alg,directorio):
                 pass
             else:
                 contador+=1
+                logging.warning('El archivo ' + archivo + ' ha sido MODIFICADO')
     # print(contador)
 
     return contador
