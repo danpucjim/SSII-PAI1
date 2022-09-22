@@ -2,6 +2,9 @@ import hashlib
 import sys
 import os
 import logging
+import schedule
+import time
+from configparser import ConfigParser
 
 # CONSTANTES GLOBALES
 BLOCK_SIZE = 65536 # tamanyo de cada bloque del archivo
@@ -11,11 +14,17 @@ script.py sha256
 script.py sha1"""
 
 # VARIABLES
-
 hashes = dict() # Diccionario con el hash calculado la primera vez
 new_hash = dict() # Diccionario con el hash calculado ahora mismo para compararlo con el antiguo
 CONTADOR = 0
 
+# Extraer configuraciones
+configParser = ConfigParser() #Creamos el objeto para leer el conf
+configParser.read(r'C:\Users\mendo\Desktop\Proyectos\US_ES_SSII\SSII-PAI1\directorios.conf') #especificamos el archivo a leer
+timeInterval = configParser.get('CONFIG', 'Tiempo') #Extraemos el intervalo de tiempo
+directorios = configParser.get('CONFIG', 'Directorios').strip("[]").split(",") #Se convierte el String a un Array de direcciones
+print('Directorios: ', directorios)
+print('TimeInterval: ', timeInterval)
 
 logging.basicConfig(filename='log.log', encoding='utf-8', level=logging.DEBUG)
 
@@ -80,35 +89,37 @@ def guardar_hash(file,dict):
 
 
 # Comparador de hashes
-def comp_hash(alg,directorio):
+def comp_hash(alg,directorios):
 
     contador = 0
 
-    hash_todo_directorio(alg,directorio,new_hash)
+    for directorio in directorios:
+        hash_todo_directorio(alg,directorio,new_hash)
 
-    for archivo,hash in hashes.items():
-        if archivo in new_hash:
-            if hash == new_hash[archivo]:
-                pass
-            else:
-                contador+=1
-                logging.warning('El archivo ' + archivo + ' ha sido MODIFICADO')
-    # print(contador)
+        for archivo,hash in hashes.items():
+            if archivo in new_hash:
+                if hash == new_hash[archivo]:
+                    pass
+                else:
+                    contador+=1
+                    logging.warning('El archivo ' + archivo + ' ha sido MODIFICADO')
+        # print(contador)
 
     return contador
 
 
 # Actualizamos el diccionario con los hashes
-def actualizar_dict_hash():
+def actualizar_dict_hash(tipo_alg):
+    # Correr el primer Analisis:
+    comp_hash(tipo_alg, directorios)
 
     file = open("hash","r")
     for linea in file:
-
         ruta,resto = os.path.split(linea) # Te devuelve la ruta y el resto
         fichero = resto.split(':')[0]
         hash = resto.split(':')[1]
-
         hashes[ruta+"\\"+fichero] = hash.split('\n')[0]
+        
 
 
 
@@ -117,24 +128,28 @@ def main():
     print('Ejecutando el script')
 
     args = sys.argv # guardamos los argumentos que pasamos en el script y comprobamos que algoritmo utilizara
-    actualizar_dict_hash()
-    
     if(len(args)>1):
-
         tipo_alg = args[1] # args es ['.\\script_manu.py', 'sha1']
+        actualizar_dict_hash(tipo_alg)
+        
+        schedule.every().day.at(timeInterval).do(run_analysis, tipo_alg)
+        
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
+    else: 
+        print('Script Finalizado - Falta un Argumento')
 
-        match tipo_alg:
+def run_analysis(tipo_alg): 
+    print("Corre Analisis")
+    match tipo_alg:
             case 'sha256': # Si ejecutamos: script.py sha256
-                print("Hay cambios en ", comp_hash('sha256', r'C:\Users\Manuel\Documents\SSII-code\SSII-PAI1\archivos'), " archivos.")
+                print("Hay cambios en ", comp_hash('sha256', directorios), " archivos.")
             
 
             case 'sha1': # Si ejecutamos: script.py sha1
-                print("Hay cambios en ", comp_hash('sha1',r'C:\Users\Manuel\Documents\SSII-code\SSII-PAI1\archivos'), " archivos.")
-    
-    print('Script finalizado')
-
-    return TEXTO
-
+                print("Hay cambios en ", comp_hash('sha1', directorios), " archivos.")
+    print("Termina Analisis")        
 
 if __name__ == "__main__":
     main()
