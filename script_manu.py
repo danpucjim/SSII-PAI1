@@ -1,3 +1,4 @@
+from genericpath import isfile
 import hashlib
 import sys
 import os
@@ -8,10 +9,7 @@ from configparser import ConfigParser
 
 # CONSTANTES GLOBALES
 BLOCK_SIZE = 65536 # tamanyo de cada bloque del archivo
-FILE = "./README.md"
-TEXTO = """Este script comprobara diariamente que los datos siguen siendo legitimos, usted podra hacer uso de este con el algoritmo sha256 y el algoritmo sha1 de la siguiente manera
-script.py sha256
-script.py sha1"""
+
 
 # VARIABLES
 hashes = dict() # Diccionario con el hash calculado la primera vez
@@ -20,13 +18,13 @@ CONTADOR = 0
 
 # Extraer configuraciones
 configParser = ConfigParser() #Creamos el objeto para leer el conf
-configParser.read(r'C:\Users\mendo\Desktop\Proyectos\US_ES_SSII\SSII-PAI1\directorios.conf') #especificamos el archivo a leer
+configParser.read(r'C:\Users\manue\Documents\SSII-PAI1\directorios.conf') #especificamos el archivo a leer
 timeInterval = configParser.get('CONFIG', 'Tiempo') #Extraemos el intervalo de tiempo
 directorios = configParser.get('CONFIG', 'Directorios').strip("[]").split(",") #Se convierte el String a un Array de direcciones
 print('Directorios: ', directorios)
 print('TimeInterval: ', timeInterval)
 
-logging.basicConfig(filename='log.log', encoding='utf-8', level=logging.DEBUG)
+logging.basicConfig(filename='log.log', encoding='utf-8')
 
 """
 FUNCIONES
@@ -70,11 +68,17 @@ def hash_todo_directorio(alg,directorio,dict):
     archivos = [os.path.join(directorio, nombre) for nombre in nombres] # Ruta completa de cada archivo en el directorio
     
     for x in archivos: # HORRIBLE. LO ARREGLARE
-       match alg:
-        case 'sha1':
-            dict[x] = alg_sha1(x)
-        case 'sha256':
-            dict[x] = alg_sha256(x)
+
+        if os.path.isfile(x):
+            # Si es un archivo
+            match alg:
+                case 'sha1':
+                    dict[x] = alg_sha1(x)
+                case 'sha256':
+                    dict[x] = alg_sha256(x)
+        else:
+            # Si es un directorio, hacer recursivamente a todos los archivos del directorio
+            hash_todo_directorio(alg,x,dict)
 
     guardar_hash("hash", dict)
 
@@ -102,8 +106,10 @@ def comp_hash(alg,directorios):
                     pass
                 else:
                     contador+=1
-                    logging.warning('El archivo ' + archivo + ' ha sido MODIFICADO')
+                    logging.warning('El archivo ' + archivo + ' ha sido MODIFICADO. Hora: {}'.format(time.asctime()))
         # print(contador)
+        if contador==0:
+            logging.warning('Ningún archivo ha sido modificado. Hora: {}'.format(time.asctime()))
 
     return contador
 

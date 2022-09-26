@@ -1,10 +1,2 @@
-WARNING:root:El archivo C:\Users\Manuel\Documents\SSII-code\SSII-PAI1\archivos\paisaje_copia.jpg ha sido MODIFICADO
-DEBUG:schedule:Running job Job(interval=1, unit=days, do=run_analysis, args=(), kwargs={})
-DEBUG:schedule:Running job Job(interval=1, unit=days, do=<lambda>, args=(), kwargs={})
-DEBUG:schedule:Running job Job(interval=1, unit=days, do=<lambda>, args=(), kwargs={})
-DEBUG:schedule:Running job Job(interval=1, unit=days, do=run_analysis, args=(['c:/Users/mendo/Desktop/Proyectos/US_ES_SSII/SSII-PAI1/script_manu.py', 'sha256'],), kwargs={})
-DEBUG:schedule:Running job Job(interval=1, unit=days, do=run_analysis, args=(['c:/Users/mendo/Desktop/Proyectos/US_ES_SSII/SSII-PAI1/script_manu.py', 'sha256'],), kwargs={})
-DEBUG:schedule:Running job Job(interval=1, unit=days, do=run_analysis, args=(['c:/Users/mendo/Desktop/Proyectos/US_ES_SSII/SSII-PAI1/script_manu.py', 'sha256'],), kwargs={})
-DEBUG:schedule:Running job Job(interval=1, unit=days, do=run_analysis, args=(['c:/Users/mendo/Desktop/Proyectos/US_ES_SSII/SSII-PAI1/script_manu.py', 'sha256'],), kwargs={})
-DEBUG:schedule:Running job Job(interval=1, unit=days, do=run_analysis, args=(['c:/Users/mendo/Desktop/Proyectos/US_ES_SSII/SSII-PAI1/script_manu.py', 'sha256'],), kwargs={})
-DEBUG:schedule:Running job Job(interval=1, unit=days, do=run_analysis, args=('sha256',), kwargs={})
+WARNING:root:Ningún archivo ha sido modificado. Hora: Mon Sep 26 13:33:45 2022
+WARNING:root:Ningún archivo ha sido modificado. Hora: Mon Sep 26 13:34:00 2022
