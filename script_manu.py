@@ -18,7 +18,7 @@ CONTADOR = 0
 
 # Extraer configuraciones
 configParser = ConfigParser() #Creamos el objeto para leer el conf
-configParser.read(r'C:\Users\manue\Documents\SSII-PAI1\directorios.conf') #especificamos el archivo a leer
+configParser.read(r'C:\Users\mendo\Desktop\Proyectos\US_ES_SSII\SSII-PAI1\directorios.conf') #especificamos el archivo a leer
 timeInterval = configParser.get('CONFIG', 'Tiempo') #Extraemos el intervalo de tiempo
 directorios = configParser.get('CONFIG', 'Directorios').strip("[]").split(",") #Se convierte el String a un Array de direcciones
 print('Directorios: ', directorios)
@@ -50,13 +50,12 @@ def lect_archivo(archivo, bs, h):
         quepen en memoria y asi sea mas eficiente. 
     """
 
-    with open(archivo,'rb') as f:
-        fb = f.read(bs)
+    b  = bytearray(128*1024)
+    mv = memoryview(b)
+    with open(archivo, 'rb', buffering=0) as f:
         
-        while len(fb) > 0:
-            fb = f.read(bs)
-            h.update(fb)
-
+        for n in iter(lambda : f.readinto(mv), 0):
+            h.update(mv[:n])
     return h.hexdigest()
 
 
@@ -107,7 +106,6 @@ def comp_hash(alg,directorios):
                 else:
                     contador+=1
                     logging.warning('El archivo ' + archivo + ' ha sido MODIFICADO. Hora: {}'.format(time.asctime()))
-        # print(contador)
         if contador==0:
             logging.warning('Ningún archivo ha sido modificado. Hora: {}'.format(time.asctime()))
 
@@ -151,7 +149,7 @@ def run_analysis(tipo_alg):
     match tipo_alg:
             case 'sha256': # Si ejecutamos: script.py sha256
                 print("Hay cambios en ", comp_hash('sha256', directorios), " archivos.")
-            
+
 
             case 'sha1': # Si ejecutamos: script.py sha1
                 print("Hay cambios en ", comp_hash('sha1', directorios), " archivos.")
