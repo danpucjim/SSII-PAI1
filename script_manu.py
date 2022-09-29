@@ -16,11 +16,11 @@ BLOCK_SIZE = 65536 # tamanyo de cada bloque del archivo
 hashes = dict() # Diccionario con el hash calculado la primera vez
 new_hash = dict() # Diccionario con el hash calculado ahora mismo para compararlo con el antiguo
 CONTADOR = 0
-INCIDENTES_MES = 0
+INCIDENTES_MES = dict()
 
 # Extraer configuraciones
 configParser = ConfigParser() #Creamos el objeto para leer el conf
-configParser.read(r'C:\Users\Manuel\Documents\SSII-code\SSII-PAI1\directorios.conf') #especificamos el archivo a leer
+configParser.read(r'C:\Users\mendo\Desktop\Proyectos\US_ES_SSII\SSII-PAI1\directorios.conf') #especificamos el archivo a leer
 timeInterval = configParser.get('CONFIG', 'Tiempo') #Extraemos el intervalo de tiempo
 directorios = configParser.get('CONFIG', 'Directorios').strip("[]").split(",") #Se convierte el String a un Array de direcciones
 
@@ -106,6 +106,8 @@ def comp_hash(alg,directorios):
                 else:
                     contador+=1
                     daily_log.warning('El archivo ' + archivo + ' ha sido MODIFICADO. Hora: {}'.format(time.asctime()))
+                    if archivo not in INCIDENTES_MES: 
+                        INCIDENTES_MES[archivo] = format(time.asctime())
         if contador==0:
             daily_log.warning('Ningún archivo ha sido modificado. Hora: {}'.format(time.asctime()))
 
@@ -130,12 +132,18 @@ def monthly_report():
     print('Se ejecuta monthly report')
     dia_mes = int(time.strftime('%d')) # strftime devuelve str. Convertir a int
     print('dia_mes = ', dia_mes)
-    if dia_mes != 28:
+    if dia_mes != 29:
         # No es primero de mes
         return
     else:
         print('SE TIENE QUE EJECUTAR REPORT')
-        monthly_log.warning('Reporte del mes {}: Número de incidentes: {}'.format(time.strftime('%m'), INCIDENTES_MES))
+        monthly_log.critical('Reporte del mes {}: Número de incidentes: {}'.format(time.strftime('%m/%y'), len(INCIDENTES_MES)))
+        
+        if len(INCIDENTES_MES) > 0:
+            for error in INCIDENTES_MES:
+                monthly_log.warning(f'El archivo "{error}" fue modificado el {INCIDENTES_MES[error]}')
+
+        monthly_log.critical('----- Fin del reporte del mes -----')
         # monthly_log.warning('Reporte del mes {}: Número de incidentes: {}'.format(time.strftime('%m'), INCIDENTES_MES))
 
 
