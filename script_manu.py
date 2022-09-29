@@ -1,3 +1,4 @@
+from email.encoders import encode_noop
 from genericpath import isfile
 import hashlib
 import sys
@@ -15,16 +16,15 @@ BLOCK_SIZE = 65536 # tamanyo de cada bloque del archivo
 hashes = dict() # Diccionario con el hash calculado la primera vez
 new_hash = dict() # Diccionario con el hash calculado ahora mismo para compararlo con el antiguo
 CONTADOR = 0
+INCIDENTES_MES = 0
 
 # Extraer configuraciones
 configParser = ConfigParser() #Creamos el objeto para leer el conf
-configParser.read(r'C:\Users\mendo\Desktop\Proyectos\US_ES_SSII\SSII-PAI1\directorios.conf') #especificamos el archivo a leer
+configParser.read(r'C:\Users\Manuel\Documents\SSII-code\SSII-PAI1\directorios.conf') #especificamos el archivo a leer
 timeInterval = configParser.get('CONFIG', 'Tiempo') #Extraemos el intervalo de tiempo
 directorios = configParser.get('CONFIG', 'Directorios').strip("[]").split(",") #Se convierte el String a un Array de direcciones
-print('Directorios: ', directorios)
-print('TimeInterval: ', timeInterval)
 
-logging.basicConfig(filename='log.log', encoding='utf-8')
+# logging.basicConfig(filename='log.log', encoding='utf-8')
 
 """
 FUNCIONES
@@ -105,9 +105,9 @@ def comp_hash(alg,directorios):
                     pass
                 else:
                     contador+=1
-                    logging.warning('El archivo ' + archivo + ' ha sido MODIFICADO. Hora: {}'.format(time.asctime()))
+                    daily_log.warning('El archivo ' + archivo + ' ha sido MODIFICADO. Hora: {}'.format(time.asctime()))
         if contador==0:
-            logging.warning('Ningún archivo ha sido modificado. Hora: {}'.format(time.asctime()))
+            daily_log.warning('Ningún archivo ha sido modificado. Hora: {}'.format(time.asctime()))
 
     return contador
 
@@ -125,7 +125,35 @@ def actualizar_dict_hash(tipo_alg):
         hashes[ruta+"\\"+fichero] = hash.split('\n')[0]
         
 
+def monthly_report():
+    
+    print('Se ejecuta monthly report')
+    dia_mes = int(time.strftime('%d')) # strftime devuelve str. Convertir a int
+    print('dia_mes = ', dia_mes)
+    if dia_mes != 28:
+        # No es primero de mes
+        return
+    else:
+        print('SE TIENE QUE EJECUTAR REPORT')
+        monthly_log.warning('Reporte del mes {}: Número de incidentes: {}'.format(time.strftime('%m'), INCIDENTES_MES))
+        # monthly_log.warning('Reporte del mes {}: Número de incidentes: {}'.format(time.strftime('%m'), INCIDENTES_MES))
 
+
+
+def setup_logger(name, log_file):
+
+    print('Se ejecuta setup_logger')
+
+    handler = logging.FileHandler(log_file, encoding='utf-8')
+    
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.WARNING)
+    logger.addHandler(handler)
+
+    return logger
+
+daily_log = setup_logger('daily_log', 'log.log')
+monthly_log = setup_logger('monthly_log', 'mensual.log')
 
 def main():
 
@@ -137,6 +165,7 @@ def main():
         actualizar_dict_hash(tipo_alg)
         
         schedule.every().day.at(timeInterval).do(run_analysis, tipo_alg)
+        schedule.every().day.at(timeInterval).do(monthly_report)
         
         while True:
             schedule.run_pending()
