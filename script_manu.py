@@ -20,7 +20,7 @@ INCIDENTES_MES = dict()
 
 # Extraer configuraciones
 configParser = ConfigParser() #Creamos el objeto para leer el conf
-configParser.read(r'C:\Users\mendo\Desktop\Proyectos\US_ES_SSII\SSII-PAI1\directorios.conf') #especificamos el archivo a leer
+configParser.read(r'directorios.conf') #especificamos el archivo a leer
 timeInterval = configParser.get('CONFIG', 'Tiempo') #Extraemos el intervalo de tiempo
 directorios = configParser.get('CONFIG', 'Directorios').strip("[]").split(",") #Se convierte el String a un Array de direcciones
 
@@ -173,7 +173,7 @@ def main():
         tipo_alg = args[1] # args es ['.\\script_manu.py', 'sha1']
         actualizar_dict_hash(tipo_alg)
         
-        schedule.every().day.at(timeInterval).do(run_analysis, tipo_alg)
+        schedule.every().dat.at(timeInterval).do(run_analysis, tipo_alg)
         schedule.every().day.at(timeInterval).do(monthly_report)
         
         while True:
@@ -191,7 +191,24 @@ def run_analysis(tipo_alg):
 
             case 'sha1': # Si ejecutamos: script.py sha1
                 print("Hay cambios en ", comp_hash('sha1', directorios), " archivos.")
-    print("Termina Analisis")        
+    print("Termina Analisis") 
+
+def proof_of_possesion(mensaje):
+    """
+    Parametro -> mensaje estilo rutanumero
+    La funcion parte este mensaje en dos para acceder a la ruta dada y comprobar si los ultimos 5 digitos coinciden con los que tiene el servidor
+    """
+    ruta = mensaje[0:-5]
+    numero = mensaje[-5:]
+
+    if(hashes[ruta][-5:] == numero):
+        print("Token de acceso")
+
 
 if __name__ == "__main__":
+
+    #PRUEBA DEL PROOF OF POSSESION
+    #hash_todo_directorio('sha256','C:\\Users\\Puche\\Documents\\GitHub\\SSII-PAI1\\archivos\\archivos2',hashes)
+    #proof_of_possesion('C:\\Users\\Puche\\Documents\\GitHub\\SSII-PAI1\\archivos\\archivos2\\fantasma.jpg7d75b')
+
     main()
