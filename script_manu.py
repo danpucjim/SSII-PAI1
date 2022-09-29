@@ -144,6 +144,7 @@ def monthly_report():
                 monthly_log.warning(f'El archivo "{error}" fue modificado el {INCIDENTES_MES[error]}')
 
         monthly_log.critical('----- Fin del reporte del mes -----')
+        INCIDENTES_MES.clear()
         # monthly_log.warning('Reporte del mes {}: Número de incidentes: {}'.format(time.strftime('%m'), INCIDENTES_MES))
 
 
