@@ -95,17 +95,19 @@ def guardar_hash(file,dict):
 def comp_hash(alg,directorios):
 
     contador = 0
+    infectado = []
 
     for directorio in directorios:
         hash_todo_directorio(alg,directorio,new_hash)
 
         for archivo,hash in hashes.items():
             if archivo in new_hash:
-                if hash == new_hash[archivo]:
+                if hash == new_hash[archivo] or (archivo in infectado):
                     pass
                 else:
                     contador+=1
                     daily_log.warning('El archivo ' + archivo + ' ha sido MODIFICADO. Hora: {}'.format(time.asctime()))
+                    infectado.append(archivo)
                     if archivo not in INCIDENTES_MES: 
                         INCIDENTES_MES[archivo] = format(time.asctime())
         if contador==0:
@@ -173,7 +175,8 @@ def main():
         tipo_alg = args[1] # args es ['.\\script_manu.py', 'sha1']
         actualizar_dict_hash(tipo_alg)
         
-        schedule.every().dat.at(timeInterval).do(run_analysis, tipo_alg)
+        schedule.every(5).seconds.do(run_analysis,tipo_alg)
+        #schedule.every().day.at(timeInterval).do(run_analysis, tipo_alg)
         schedule.every().day.at(timeInterval).do(monthly_report)
         
         while True:
@@ -182,8 +185,10 @@ def main():
     else: 
         print('Script Finalizado - Falta un Argumento')
 
-def run_analysis(tipo_alg): 
+def run_analysis(tipo_alg):
+    time_inicio = time.time() 
     print("Corre Analisis")
+    
     match tipo_alg:
             case 'sha256': # Si ejecutamos: script.py sha256
                 print("Hay cambios en ", comp_hash('sha256', directorios), " archivos.")
@@ -192,6 +197,7 @@ def run_analysis(tipo_alg):
             case 'sha1': # Si ejecutamos: script.py sha1
                 print("Hay cambios en ", comp_hash('sha1', directorios), " archivos.")
     print("Termina Analisis") 
+    print(time.time()-time_inicio," Segundos")
 
 def proof_of_possesion(mensaje):
     """
@@ -208,7 +214,8 @@ def proof_of_possesion(mensaje):
 if __name__ == "__main__":
 
     #PRUEBA DEL PROOF OF POSSESION
-    #hash_todo_directorio('sha256','C:\\Users\\Puche\\Documents\\GitHub\\SSII-PAI1\\archivos\\archivos2',hashes)
-    #proof_of_possesion('C:\\Users\\Puche\\Documents\\GitHub\\SSII-PAI1\\archivos\\archivos2\\fantasma.jpg7d75b')
+    hash_todo_directorio('sha256','C:\\Users\\Puche\\Documents\\GitHub\\SSII-PAI1\\archivos\\archivos2',hashes)
+    proof_of_possesion('C:\\Users\\Puche\\Documents\\GitHub\\SSII-PAI1\\archivos\\archivos2\\fantasma.jpg7d75b')
+    hashes = dict()
 
     main()
