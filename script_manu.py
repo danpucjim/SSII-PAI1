@@ -1,4 +1,3 @@
-from email.encoders import encode_noop
 from genericpath import isfile
 import hashlib
 import sys
@@ -8,23 +7,31 @@ import schedule
 import time
 from configparser import ConfigParser
 
-# CONSTANTES GLOBALES
-BLOCK_SIZE = 65536 # tamanyo de cada bloque del archivo
+import matplotlib.pyplot as plt
+
+"""
+CONSTANTES GLOBALES
+"""
+BLOCK_SIZE = 65536 # tamaño de cada bloque del archivo
 
 
-# VARIABLES
+"""
+VARIABLES
+"""
 hashes = dict() # Diccionario con el hash calculado la primera vez
 new_hash = dict() # Diccionario con el hash calculado ahora mismo para compararlo con el antiguo
 CONTADOR = 0
 INCIDENTES_MES = dict()
 
-# Extraer configuraciones
-configParser = ConfigParser() #Creamos el objeto para leer el conf
-configParser.read(r'directorios.conf') #especificamos el archivo a leer
-timeInterval = configParser.get('CONFIG', 'Tiempo') #Extraemos el intervalo de tiempo
-directorios = configParser.get('CONFIG', 'Directorios').strip("[]").split(",") #Se convierte el String a un Array de direcciones
 
-# logging.basicConfig(filename='log.log', encoding='utf-8')
+""""
+EXTRAER CONFIGURACIONES
+"""
+configParser = ConfigParser() # Creamos el objeto para leer el conf
+configParser.read(r'directorios.conf') # Especificamos el archivo a leer
+timeInterval = configParser.get('CONFIG', 'Tiempo') # Extraemos el intervalo de tiempo
+directorios = configParser.get('CONFIG', 'Directorios').strip("[]").split(",") # Se convierte el String a un Array de direcciones
+
 
 """
 FUNCIONES
@@ -59,8 +66,14 @@ def lect_archivo(archivo, bs, h):
     return h.hexdigest()
 
 
-# Calculamos el hash de todos los archivos en el directorio dado
-# recibe alg(sha256 o sha1) - directorio(sobre el que se haran los hashes de los archivos) - dict(el diccionario de los hashes antiguos o el nuevo)
+
+"""
+Calculamos el hash de todos los archivos en el directorio dado.
+ - alg: Tipo de algoritmo de hash a utilizar, sha256 o sha1
+ - directorio: Directorio sobre el que se harán los hashes de los archivos
+ - dict: Diccionario sobre el que se guardarán los hashes. Puede ser el antiguo o nuevo
+"""
+
 def hash_todo_directorio(alg,directorio,dict):
     
     nombres = os.listdir(directorio) # Nombre de todos los archivos en el directorio dado
@@ -82,7 +95,14 @@ def hash_todo_directorio(alg,directorio,dict):
     guardar_hash("hash", dict)
 
 
-# Guardar los hashes calculados junto con el nombre de los archivos en el fichero
+
+"""
+Función que guarda los hashes calculados junto con el nombre de los archivos
+en el fichero correspondiente.
+ - file: Archivo donde guardaremos los hashes
+ - dict: Diccionario que contiene los hashes que queremos guardar
+"""
+
 def guardar_hash(file,dict):
 
     pfile = open(file,"w")
@@ -103,11 +123,13 @@ def comp_hash(alg,directorios):
         for archivo,hash in hashes.items():
             if archivo in new_hash:
                 if hash == new_hash[archivo] or (archivo in infectado):
+                    # No hay cambios.
                     pass
                 else:
                     contador+=1
                     daily_log.warning('El archivo ' + archivo + ' ha sido MODIFICADO. Hora: {}'.format(time.asctime()))
                     infectado.append(archivo)
+                    
                     if archivo not in INCIDENTES_MES: 
                         INCIDENTES_MES[archivo] = format(time.asctime())
         if contador==0:
@@ -116,9 +138,12 @@ def comp_hash(alg,directorios):
     return contador
 
 
-# Actualizamos el diccionario con los hashes
+"""
+Actualizamos el diccionario con los hashes.
+"""
 def actualizar_dict_hash(tipo_alg):
-    # Correr el primer Analisis:
+    
+    # Realizar el primer análisis:
     comp_hash(tipo_alg, directorios)
 
     file = open("hash","r")
@@ -127,33 +152,38 @@ def actualizar_dict_hash(tipo_alg):
         fichero = resto.split(':')[0]
         hash = resto.split(':')[1]
         hashes[ruta+"\\"+fichero] = hash.split('\n')[0]
-        
 
+
+"""
+Función que genera el informe mensual que se guarda en el archivo mensual.log
+"""
 def monthly_report():
     
     print('Se ejecuta monthly report')
+    
     dia_mes = int(time.strftime('%d')) # strftime devuelve str. Convertir a int
-    print('dia_mes = ', dia_mes)
-    if dia_mes != 29:
-        # No es primero de mes
+    if dia_mes != 1:
+        # NO se ejecuta. No es primero de mes
         return
     else:
-        print('SE TIENE QUE EJECUTAR REPORT')
         monthly_log.critical('Reporte del mes {}: Número de incidentes: {}'.format(time.strftime('%m/%y'), len(INCIDENTES_MES)))
         
         if len(INCIDENTES_MES) > 0:
             for error in INCIDENTES_MES:
                 monthly_log.warning(f'El archivo "{error}" fue modificado el {INCIDENTES_MES[error]}')
 
+        generar_graficas(time.strftime('%m'))
+        
         monthly_log.critical('----- Fin del reporte del mes -----')
-        INCIDENTES_MES.clear()
-        # monthly_log.warning('Reporte del mes {}: Número de incidentes: {}'.format(time.strftime('%m'), INCIDENTES_MES))
+        INCIDENTES_MES.clear() # Vaciar el diccionario para poder utilizarlo en el siguiente reporte mensual.
 
 
-
+"""
+Función que sirve para configurar los diferentes logs que utilizamos (log diario y log mensual).
+ - name: Nombre del log
+ - log_file: Nombre del archivo que corresponde al log
+"""
 def setup_logger(name, log_file):
-
-    print('Se ejecuta setup_logger')
 
     handler = logging.FileHandler(log_file, encoding='utf-8')
     
@@ -166,26 +196,53 @@ def setup_logger(name, log_file):
 daily_log = setup_logger('daily_log', 'log.log')
 monthly_log = setup_logger('monthly_log', 'mensual.log')
 
+
+def generar_graficas(mes):
+
+    print('E----- Ejecutando generador de gráficas mensual -----')
+
+    # Reportes mensuales
+    labels = ["infectados", "no infectados"]
+
+    num_archivos = 0
+    for directorio in directorios:
+
+        for _,_, files in os.walk(directorio): # Devuelve 3 parámetros. Solo queremos saber los archivos
+            num_archivos+= len(files)
+
+    num_infectados = len(INCIDENTES_MES)
+    y = [num_infectados/num_archivos, (num_archivos-num_infectados)/num_archivos] # En porcentajes
+
+    plt.pie(y, labels=labels, autopct='%1.1f%%')
+    plt.legend()
+    plt.title(f'Reporte mensual del mes {mes}')
+    plt.savefig(f'reporte_mensual_{mes}.png')
+
+
+
 def main():
 
-    print('Ejecutando el script')
+    print('----- Ejecutamos el script -----')
 
-    args = sys.argv # guardamos los argumentos que pasamos en el script y comprobamos que algoritmo utilizara
+    args = sys.argv # Guardamos los argumentos que pasamos en el script y comprobamos que algoritmo utilizara
+    
     if(len(args)>1):
-        tipo_alg = args[1] # args es ['.\\script_manu.py', 'sha1']
+        tipo_alg = args[1] # Valores que devuelve args, nombre del archivo y tipo de alg: ['.\\script_manu.py', 'sha1']
+        
         actualizar_dict_hash(tipo_alg)
         
         schedule.every(5).seconds.do(run_analysis,tipo_alg)
-        #schedule.every().day.at(timeInterval).do(run_analysis, tipo_alg)
         schedule.every().day.at(timeInterval).do(monthly_report)
         
         while True:
             schedule.run_pending()
             time.sleep(1)
     else: 
-        print('Script Finalizado - Falta un Argumento')
+        print('Script finalizado - Falta un argumento')
+
 
 def run_analysis(tipo_alg):
+    
     time_inicio = time.time() 
     print("Corre Analisis")
     
@@ -196,8 +253,9 @@ def run_analysis(tipo_alg):
 
             case 'sha1': # Si ejecutamos: script.py sha1
                 print("Hay cambios en ", comp_hash('sha1', directorios), " archivos.")
-    print("Termina Analisis") 
-    print(time.time()-time_inicio," Segundos")
+    # print("Termina Analisis") 
+    # print(time.time()-time_inicio," Segundos")
+
 
 def proof_of_possesion(mensaje):
     """
@@ -214,8 +272,8 @@ def proof_of_possesion(mensaje):
 if __name__ == "__main__":
 
     #PRUEBA DEL PROOF OF POSSESION
-    hash_todo_directorio('sha256','C:\\Users\\Puche\\Documents\\GitHub\\SSII-PAI1\\archivos\\archivos2',hashes)
-    proof_of_possesion('C:\\Users\\Puche\\Documents\\GitHub\\SSII-PAI1\\archivos\\archivos2\\fantasma.jpg7d75b')
-    hashes = dict()
+    # hash_todo_directorio('sha256','C:\\Users\\Puche\\Documents\\GitHub\\SSII-PAI1\\archivos\\archivos2',hashes)
+    # proof_of_possesion('C:\\Users\\Puche\\Documents\\GitHub\\SSII-PAI1\\archivos\\archivos2\\fantasma.jpg7d75b')
+    # hashes = dict()
 
     main()
