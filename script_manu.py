@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 """
 CONSTANTES GLOBALES
 """
-BLOCK_SIZE = 65536 # tamaño de cada bloque del archivo
+BLOCK_SIZE = 128*1024 # tamaño de cada bloque del archivo
 
 
 """
@@ -52,10 +52,10 @@ def lect_archivo(archivo, bs, h):
 
     """ Algunos archivos pueden ser muy grandes.
         Partimos el archivo en varios trozos para que 
-        quepen en memoria y asi sea mas eficiente. 
+        quepen en memoria y así sea más eficiente. 
     """
 
-    b  = bytearray(128*1024)
+    b  = bytearray(bs)
     mv = memoryview(b)
     with open(archivo, 'rb', buffering=0) as f:
         
@@ -77,7 +77,7 @@ def hash_todo_directorio(alg,directorio,dict):
     nombres = os.listdir(directorio) # Nombre de todos los archivos en el directorio dado
     archivos = [os.path.join(directorio, nombre) for nombre in nombres] # Ruta completa de cada archivo en el directorio
     
-    for x in archivos: # HORRIBLE. LO ARREGLARE
+    for x in archivos:
 
         if os.path.isfile(x):
             # Si es un archivo
@@ -162,7 +162,7 @@ def monthly_report():
     print('Se ejecuta monthly report')
     
     dia_mes = int(time.strftime('%d')) # strftime devuelve str. Convertir a int
-    if dia_mes != 2:
+    if dia_mes != 1:
         # NO se ejecuta. No es primero de mes
         return
     else:
