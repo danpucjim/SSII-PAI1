@@ -1,4 +1,3 @@
-from genericpath import isfile
 import hashlib
 import sys
 import os
@@ -6,7 +5,6 @@ import logging
 import schedule
 import time
 from configparser import ConfigParser
-
 import matplotlib.pyplot as plt
 
 """
@@ -111,7 +109,9 @@ def guardar_hash(file,dict):
         pfile.write("\n")
 
 
-# Comparador de hashes
+"""
+Función que compara los hashes de los archivos. Si detecta cambios, lo notifica en el log.
+"""
 def comp_hash(alg,directorios):
 
     contador = 0
@@ -127,13 +127,13 @@ def comp_hash(alg,directorios):
                     pass
                 else:
                     contador+=1
-                    daily_log.warning('El archivo ' + archivo + ' ha sido MODIFICADO. Hora: {}'.format(time.asctime()))
+                    daily_log.warning(f'El archivo {archivo} ha sido MODIFICADO. Hora: {time.asctime()}')
                     infectado.append(archivo)
                     
                     if archivo not in INCIDENTES_MES: 
                         INCIDENTES_MES[archivo] = format(time.asctime())
         if contador==0:
-            daily_log.warning('Ningún archivo ha sido modificado. Hora: {}'.format(time.asctime()))
+            daily_log.warning(f'Ningún archivo ha sido modificado. Hora: {time.asctime()}')
 
     return contador
 
@@ -162,7 +162,7 @@ def monthly_report():
     print('Se ejecuta monthly report')
     
     dia_mes = int(time.strftime('%d')) # strftime devuelve str. Convertir a int
-    if dia_mes != 1:
+    if dia_mes != 2:
         # NO se ejecuta. No es primero de mes
         return
     else:
@@ -172,7 +172,7 @@ def monthly_report():
             for error in INCIDENTES_MES:
                 monthly_log.warning(f'El archivo "{error}" fue modificado el {INCIDENTES_MES[error]}')
 
-        generar_graficas(time.strftime('%m'))
+        generar_grafica(time.strftime('%m'))
         
         monthly_log.critical('----- Fin del reporte del mes -----')
         INCIDENTES_MES.clear() # Vaciar el diccionario para poder utilizarlo en el siguiente reporte mensual.
@@ -197,13 +197,17 @@ daily_log = setup_logger('daily_log', 'log.log')
 monthly_log = setup_logger('monthly_log', 'mensual.log')
 
 
-def generar_graficas(mes):
+"""
+Función que genera la gráfica correspondientes al reporte mensual
+"""
+def generar_grafica(mes):
 
-    print('E----- Ejecutando generador de gráficas mensual -----')
+    print('E----- Ejecutando generador de gráfica mensual -----')
 
     # Reportes mensuales
     labels = ["infectados", "no infectados"]
 
+    # Calculamos los archivos totales en el directorio y subdirectorios
     num_archivos = 0
     for directorio in directorios:
 
