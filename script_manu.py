@@ -235,7 +235,7 @@ def main():
         
         actualizar_dict_hash(tipo_alg)
         
-        schedule.every(5).seconds.do(run_analysis,tipo_alg)
+        schedule.every().day.at(timeInterval).do(run_analysis,tipo_alg)
         schedule.every().day.at(timeInterval).do(monthly_report)
         
         while True:
@@ -257,8 +257,8 @@ def run_analysis(tipo_alg):
 
             case 'sha1': # Si ejecutamos: script.py sha1
                 print("Hay cambios en ", comp_hash('sha1', directorios), " archivos.")
-    # print("Termina Analisis") 
-    # print(time.time()-time_inicio," Segundos")
+    print("Termina Analisis") 
+    print(time.time()-time_inicio," Segundos")
 
 
 def proof_of_possesion(mensaje):
@@ -270,14 +270,12 @@ def proof_of_possesion(mensaje):
     numero = mensaje[-5:]
 
     if(hashes[ruta][-5:] == numero):
-        print("Token de acceso")
+        token = hashlib.sha256(mensaje.encode())
+    return token.hexdigest()
 
 
 if __name__ == "__main__":
-
-    #PRUEBA DEL PROOF OF POSSESION
-    # hash_todo_directorio('sha256','C:\\Users\\Puche\\Documents\\GitHub\\SSII-PAI1\\archivos\\archivos2',hashes)
-    # proof_of_possesion('C:\\Users\\Puche\\Documents\\GitHub\\SSII-PAI1\\archivos\\archivos2\\fantasma.jpg7d75b')
-    # hashes = dict()
-
+    hash_todo_directorio('sha256','C:\\Users\\Puche\\Documents\\GitHub\\SSII-PAI1\\archivos\\archivos2',hashes)
+    print("TOKEN DE ACCESO: ",proof_of_possesion('C:\\Users\\Puche\\Documents\\GitHub\\SSII-PAI1\\archivos\\archivos2\\fantasma.jpg7d75b'))
+    hashes = dict()
     main()
