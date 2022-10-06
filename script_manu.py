@@ -131,13 +131,20 @@ def monthly_report():
     
     print('Se ejecuta monthly report')
     dia_mes = int(time.strftime('%d')) # strftime devuelve str. Convertir a int
+    mes = int(time.strftime('%m'))
+    anio = int(time.strftime('%y'))
     print('dia_mes = ', dia_mes)
-    if dia_mes != 29:
+
+    if (mes-1) <= 0:
+        mes = 12
+        anio = anio-1
+
+    if dia_mes != 1:
         # No es primero de mes
         return
     else:
         print('SE TIENE QUE EJECUTAR REPORT')
-        monthly_log.critical('Reporte del mes {}: Número de incidentes: {}'.format(time.strftime('%m/%y'), len(INCIDENTES_MES)))
+        monthly_log.critical('Reporte del mes {}: Número de incidentes: {}'.format(f'{mes}/{anio}', len(INCIDENTES_MES)))
         
         if len(INCIDENTES_MES) > 0:
             for error in INCIDENTES_MES:
@@ -173,8 +180,8 @@ def main():
         tipo_alg = args[1] # args es ['.\\script_manu.py', 'sha1']
         actualizar_dict_hash(tipo_alg)
         
-        schedule.every().dat.at(timeInterval).do(run_analysis, tipo_alg)
         schedule.every().day.at(timeInterval).do(monthly_report)
+        schedule.every().day.at(timeInterval).do(run_analysis, tipo_alg)
         
         while True:
             schedule.run_pending()
