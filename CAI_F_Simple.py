@@ -16,6 +16,7 @@ def main():
     print('------Tree1------',tree1)
 
     tree2[changeRandomIndex].value = random.randint(0, (2**(tree1.height+1))-2)
+    
     print('------Tree2------',tree2)
     
     # time.sleep(1)
