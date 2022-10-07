@@ -1,5 +1,5 @@
 from random import Random 
-import binarytree, copy, time
+import binarytree, copy
 
 """
 FUNCIONES
@@ -7,7 +7,7 @@ FUNCIONES
 
 def main():  
     tree1 = binarytree.tree(height=3, is_perfect=True)
-    tree2 = copy.copy(tree1)
+    tree2 = copy.deepcopy(tree1)
 
     random = Random()
     changeRandomIndex = random.randint(0, (2**(tree1.height+1))-2)
